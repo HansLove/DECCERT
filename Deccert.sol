@@ -13,7 +13,6 @@ contract Deccert is ERC721URIStorage,Ownable{
 
     ///////////////-----Variable-------------///////////
     Counters.Counter private _tokenIds;
-    address[] acceptedCoins;
     mapping(address=>uint256) private COINS_PRICE;
 
     string internal baseURI;
@@ -166,50 +165,7 @@ contract Deccert is ERC721URIStorage,Ownable{
 
     }
 
-    //Any user can call this function and mint their own certificate 
-    function PreMintingERC20(
-      string memory _name,
-      string memory _uri,
-      address _token_address,
-      address who) external LegalCoin(_token_address)  returns (uint256){
-        
-        uint256 _price=COINS_PRICE[_token_address];
-        require(_price>0);
-        IERC20(_token_address).transferFrom(msg.sender, address(this), _price);
-        
-        _tokenIds.increment();
-
-        uint256 newItemId = _tokenIds.current();
-        _mint(msg.sender, newItemId);
-        _setTokenURI(newItemId, _uri);
-        SIGNED[newItemId]=false;
-
-        Certi memory newCerti= Certi(
-        _tokenIds.current(),//token id of hashima
-        _name,
-        who,
-        who,
-        block.number,
-        block.timestamp
-        );
-
-        _certificados[newItemId] = newCerti;
-
-        return newItemId;
-
-    }
-
-/////////////////////////////////////////////////////////////////////////////////////
-
-    //sender sign no signed NFT.
-    //hasPermission modifier rest 1 from its public mapping counting
-    function SignCertificate(
-        uint256 tokenId,
-        string memory _uri)public hasPermission(_uri){
-        SIGNED[tokenId]=true;
-    }
-
-    //function called by contract owner to give 'minting power' to backend 
+    //Function called by contract owner to give 'minting power' to backend 
     //and third partys.
     function givePermission(
         address _user,
@@ -225,33 +181,10 @@ contract Deccert is ERC721URIStorage,Ownable{
         acceptedCoins.push(coinAddress);
     }
 
-
-/////////////----SETTERS----//////////////
-    function setPrice(uint256 _newPrice)external onlyOwner{
-        currentPrice=_newPrice;
-    }
-
-    function setPriceERC20(address coin,uint256 _newPrice)external onlyOwner{
-        require(_newPrice>0,'price has to be more than 0');
-        for (uint256 index = 0; index < acceptedCoins.length; index++) {
-            
-            if(acceptedCoins[index]==coin){
-                COINS_PRICE[coin]=_newPrice;
-                break;
-            }
-        }
-        
-    }
-
     function get(uint256 _index)public view returns(Certi memory){
           return _certificados[_index];
     }
   
-    function check(uint256 _index)external view{
-          require(_certificados[_index].owner==msg.sender);
-    }
-
-
     function getTotal()public view returns(uint256){
         return(_tokenIds.current());
     }
@@ -267,6 +200,5 @@ contract Deccert is ERC721URIStorage,Ownable{
 
     // }
 
-    //mierda de perro
   
 }
