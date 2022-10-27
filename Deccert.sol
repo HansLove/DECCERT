@@ -18,15 +18,10 @@ contract Deccert is ERC721URIStorage,Ownable{
     string internal baseURI;
     uint256 internal currentPrice=10**8 wei;
  
-    mapping(string=>mapping(address=>uint256)) private HAS_ALLOWANCE;
     mapping(string=>mapping(address=>uint256)) private MINTING_POWER;
-
-    //check the string use by the user is not repeat
-    mapping(string=>bool)public _names;
 
 
     constructor() ERC721("Deccert", "DECCERT") {}
-
 
     struct Certi {
         uint256 tokenId;
@@ -37,16 +32,9 @@ contract Deccert is ERC721URIStorage,Ownable{
         uint256 time;
     }
     
-    mapping(uint256=>Certi) _certificados ;
+    mapping(uint256=>Certi) _certificados;
     mapping(uint256=>bool) SIGNED; 
 
-
-//-----------------MODIFICADORES--------------------------//
-    modifier hasPermission(string memory _uri){
-        require(HAS_ALLOWANCE[_uri][msg.sender]>0,'Has to be more than 0 permissions');
-        HAS_ALLOWANCE[_uri][msg.sender]--;
-        _;
-    }
 
     modifier hasMintingPower(string memory _uri){
         require(MINTING_POWER[_uri][msg.sender]>0,'Has to be more than 0 minting power');
@@ -54,26 +42,14 @@ contract Deccert is ERC721URIStorage,Ownable{
         _;
     }
 
-    modifier LegalCoin(address _coin){
-        bool pass=false;
-        for (uint256 index = 0; index < acceptedCoins.length; index++) {
-            if(acceptedCoins[index]==_coin){
-                pass=true;
-                break;
-            }
-        }
-        require(pass,'not accepted coin');
-        _;
-    }
-    
     function giveMintingPower(
         address _user,
         uint256 _howMuch,
-        string memory _uri
-        )public onlyOwner{
+        string memory _uri)public onlyOwner{
 
             MINTING_POWER[_uri][_user]=_howMuch;
     }
+
 
     //Only the owner can call this function to mint NFT
     function ManualMinting(
@@ -106,7 +82,8 @@ contract Deccert is ERC721URIStorage,Ownable{
     }
 
 
-    //Owner can give user capability to mint an specific URI NFT
+    //Admin can give user capability to mint an specific URI NFT
+    //Admin has to 
     function PermissionMinting(
         string memory _name,
         string memory _uri,
@@ -134,8 +111,7 @@ contract Deccert is ERC721URIStorage,Ownable{
 
     }
 
-/////////////////////////////////////////////////////////////////////////////////////
-    
+
     //Any user can call this function and mint their own certificate 
     function PreMinting(
       string memory _name,
@@ -165,21 +141,17 @@ contract Deccert is ERC721URIStorage,Ownable{
 
     }
 
-    //Function called by contract owner to give 'minting power' to backend 
-    //and third partys.
-    function givePermission(
-        address _user,
-        uint256 _howMuch,
-        string memory _uri
-        )public onlyOwner{
+    function SignNFT(uint256 tokenId) external onlyOwner{
+        require(!SIGNED[tokenId],'NFT already signed');
+        SIGNED[tokenId]=true;
+    }
 
-            HAS_ALLOWANCE[_uri][_user]=_howMuch;
+    function UnsignNFT(uint256 tokenId)external onlyOwner{
+        require(SIGNED[tokenId],'NFT already signed');
+        SIGNED[tokenId]=false;
     }
 
 
-    function addCoin(address coinAddress)external onlyOwner{
-        acceptedCoins.push(coinAddress);
-    }
 
     function get(uint256 _index)public view returns(Certi memory){
           return _certificados[_index];
@@ -187,6 +159,13 @@ contract Deccert is ERC721URIStorage,Ownable{
   
     function getTotal()public view returns(uint256){
         return(_tokenIds.current());
+    }
+
+
+    //Returns the amount of NFTs that an account can
+    //Mint for an specific URL
+    function getMintingPower(string memory what,address _who)external view returns(uint256){
+        return MINTING_POWER[what][_who];
     }
 
     // function setBaseURI(string calldata newEntry)external onlyOwner{
