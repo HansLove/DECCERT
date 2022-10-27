@@ -22,7 +22,7 @@ contract Eddi is ERC20,Ownable{
 
     Deccert private contratoBase;
     constructor(Deccert deccert_contract) ERC20("Education", "EDDI") {
-      _mint(msg.sender, 500**18);
+      _mint(msg.sender, 500**19);
       contratoBase=deccert_contract;
     }
     
@@ -33,7 +33,6 @@ contract Eddi is ERC20,Ownable{
     function deposit(uint256 tokenId) external{
         require (msg.sender == contratoBase.ownerOf(tokenId), 'Sender must be owner');
         require (!has_deposited[tokenId], 'Sender already deposited');
-        require(contratoBase.get(tokenId).signed,"Has to be sign");
         //La altura del bloque de partida
         checkpoints[msg.sender][tokenId] = block.number;
         staking_accounts[tokenId]=msg.sender;
